@@ -41,6 +41,23 @@ unsigned char* readFileToHexArray(const char* filename, size_t* outSize) {
 }
 
 
+void writeBytesToFile(unsigned char bytes[16], char* filename) {
+    FILE* file = fopen(filename, "wb");
+
+    if (file == NULL) {
+        perror("Error during opening the file");
+	return;
+    }
+
+    for (int i=0; i<16; ++i) {
+        if (bytes[i] != NULL) {
+	    fwrite(&bytes[i], sizeof(unsigned char), 1, file);
+	}
+    }
+
+    fclose(file);
+}
+
 int main(int argc, char* args[]) {
     if (argc <= 1) {
 	perror("No argumets given.\nAborting...");
@@ -83,7 +100,9 @@ int main(int argc, char* args[]) {
 	        printf("bytes[%d] = 0x%02X\n", i, bytes[i]);
 	    }
 
+	    printf("Success!");
 	    printf("Bytes: '%s'", strBytes);
+	    writeBytesToFile(bytes, args[1]);
 	}
     }
 
