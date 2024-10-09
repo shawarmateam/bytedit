@@ -7,8 +7,7 @@ unsigned char* readFileToHexArray(const char* filename, size_t* outSize) {
     
     if (!file) {
         perror("Can't open file.\nAborting...");
-
-	return NULL;
+	    return NULL;
     }
 
     fseek(file, 0, SEEK_END);
@@ -19,9 +18,9 @@ unsigned char* readFileToHexArray(const char* filename, size_t* outSize) {
 
     if (!buffer) {
         perror("Can't allocate memory.\nAborting...");
-	fclose(file);
+        fclose(file);
 
-	return NULL;
+        return NULL;
     }
 
     // Reading the file
@@ -40,25 +39,99 @@ unsigned char* readFileToHexArray(const char* filename, size_t* outSize) {
     return buffer;
 }
 
+char* readFileToStr(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Unable to open file");
+        return NULL;
+    }
 
-void writeBytesToFile(unsigned char bytes[16], char* filename) {
+    fseek(file, 0, SEEK_END);
+    long filesize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* buffer = malloc(filesize + 1);
+    if (!buffer) {
+        perror("Unable to allocate memory");
+        fclose(file);
+        return 0;
+    }
+
+    fread(buffer, 1, filesize, file);
+    buffer[filesize] = 0;
+
+    fclose(file);
+
+    return buffer;
+}
+
+void writeBytesToFile(unsigned char* bytes, size_t len, char* filename) {
     FILE* file = fopen(filename, "wb");
 
     if (file == NULL) {
         perror("Error during opening the file");
-	return;
+	    return;
     }
 
-    for (int i=0; i<16; ++i) {
+    for (int i=0; i<len; ++i) {
         if (bytes[i] != NULL) {
-	    fwrite(&bytes[i], sizeof(unsigned char), 1, file);
-	}
+	        fwrite(&bytes[i], sizeof(unsigned char), 1, file);
+	    }
     }
 
     fclose(file);
 }
 
-int main(int argc, char* args[]) {
+unsigned char* hexStringToBytes(const char* hexString, size_t* outLength) {
+    size_t length = strlen(hexString);
+    // Удаляем пробелы
+    size_t byteCount = 0;
+    for (size_t i = 0; i < length; i++) {
+        if (hexString[i] != ' ') {
+            byteCount++;
+        }
+    }
+    
+    // Каждые два символа представляют один байт
+    *outLength = byteCount / 2;
+    unsigned char* bytes = (unsigned char*)malloc(*outLength);
+    if (bytes == NULL) {
+        return NULL; // Ошибка выделения памяти
+    }
+
+    size_t byteIndex = 0;
+    for (size_t i = 0; i < length; i += 3) { // Шаг 3, чтобы пропустить пробелы
+        if (hexString[i] != ' ') {
+            sscanf(hexString + i, "%2hhx", &bytes[byteIndex++]);
+        }
+    }
+
+    return bytes;
+}
+
+void fileWrite(char* filename, char* filename_to_write) {
+    //printf("Write bytes\n(max=16 for string):\n");
+
+    //fgets(strBytes, sizeof(strBytes), stdin);
+
+    //unsigned char bytes[16];
+    char* file_data = readFileToStr(filename);
+    printf("file_data: '%s'", file_data);
+
+    size_t out_len;
+    unsigned char* bytes = hexStringToBytes(file_data, &out_len);
+
+    //printf("Bytes: '%s'", strBytes);
+    
+    for (int i=0; i<out_len; i++) {
+        printf("%02X\n", bytes[i]);
+    }
+
+    writeBytesToFile(bytes, out_len, filename_to_write);
+    printf("Success!");
+}
+
+int main(short argc, char* args[]) {
     if (argc <= 1) {
 	perror("No argumets given.\nAborting...");
 	return 1;
@@ -71,39 +144,24 @@ int main(int argc, char* args[]) {
 	    unsigned char* data = readFileToHexArray(filename, &size);
 	    
 	    if (data) {
-		printf("File size: '%zu' bytes\nData:\n", size);
+            //printf("File size: '%zu' bytes\nData:\n", size);
 
-		for (long i=0; i<size; ++i) {
-		    printf("%02X ", data[i]);
-		}
-		printf("\n");
+            for (long i=0; i<size; ++i) {
+                printf("%02X", data[i]);
 
-		free(data);
+                if (i != size-1)
+                    printf(" ");
+            }
+            //printf("\n");
+
+            free(data);
 	    }
-    } else if (argc == 3) {
-	printf("%d, %s", argc, args[2]);
-        if (strcmp(args[2], "-f") == 0) {
-	    int maxStrLength = 16*3; // 48
-	    char strBytes[maxStrLength];
-	    printf("Write bytes\n(max=16 for string):\n");
+    } else if (argc == 4) {
+	    printf("%d, %s", argc, args[2]);
 
-            fgets(strBytes, sizeof(strBytes), stdin);
-
-	    unsigned char bytes[16];
-
-	    int i;
-	    for (i=0; i<16; ++i) {
-	        sscanf(strBytes+i*3, "%2hhX", &bytes[i]);
-	    }
-
-	    for (i=0; i<16; ++i) {
-	        printf("bytes[%d] = 0x%02X\n", i, bytes[i]);
-	    }
-
-	    printf("Success!");
-	    printf("Bytes: '%s'", strBytes);
-	    writeBytesToFile(bytes, args[1]);
-	}
+        if (!strcmp(args[2], "-f")) {
+	        fileWrite(args[1], args[3]);
+        }
     }
 
     return 0;
