@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 struct abuff {
     unsigned char *b;
@@ -69,7 +70,14 @@ unsigned char getByte(struct curpos cp, struct abuff ab) {
     int byte_i = cp.x;
     if ((byte_i-1) % 3 == 0) byte_i-1;
     byte_i /= 3;
+    
     return ab.b[byte_i];
+}
+
+bool whatHalfOfb(struct curpos cp, struct abuff ab) {
+    int byte_i = cp.x;
+    if ((byte_i-1) % 3 == 0) return false;
+    return true;
 }
 
 int boot_byd(int argc, char** argv) {
@@ -121,7 +129,9 @@ int boot_byd(int argc, char** argv) {
                 char bStr[2];
                 sprintf(bStr, "%02X", getByte(cp, ab));
 
-                bStr[0] = toupper(ch);
+                if (whatHalfOfb(cp, ab)) bStr[0] = toupper(ch);
+                else bStr[1] = toupper(ch);
+
                 unsigned char c = (unsigned char) strtol(bStr, NULL, 16);
                 changeByte(cp, ab, c);
                 break;
