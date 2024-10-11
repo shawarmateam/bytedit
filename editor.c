@@ -7,6 +7,10 @@ struct abuff {
     int len;
 };
 
+struct curpos {
+    int x,y;
+};
+
 
 void apByte(struct abuff *ab, unsigned char c) {
     size_t len = sizeof(ab->b+1);
@@ -33,15 +37,40 @@ void apByte(struct abuff *ab, unsigned char c) {
     }
 }
 
-int boot_byd(int argc, char** argv) {
+void init_byd() {
     initscr();
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
     raw();
+}
 
-    int x = 0, y = 0;
+void printBytes(struct abuff ab) {
+    for (size_t i = 0; i < ab.len; i++) {
+        printw("%02X ", ab.b[i]);
+    }
+
+    printw("++");
+}
+
+void changeByte(struct curpos cp, struct abuff ab, unsigned char c) {
+    int byte_i = cp.x;
+    if ((byte_i-1) % 3 == 0) byte_i-1;
+    byte_i /= 3;
+
+    ab.b[byte_i] = c;
+
+    clear();
+    printBytes(ab);
+}
+
+int boot_byd(int argc, char** argv) {
+    init_byd();
+
+    //int x = 0, y = 0;
+    struct curpos cp;
     struct abuff ab;
+    cp.x=0;cp.y=0;
 
     apByte(&ab, 0x01);
     apByte(&ab, 0x12);
@@ -50,34 +79,37 @@ int boot_byd(int argc, char** argv) {
     refresh();
 
     int ch;
-    for (size_t i = 0; i < ab.len; i++) {
-        printw("%02X ", ab.b[i]);
-    }
-    move(y, x);
+    printBytes(ab);
+    
+    move(cp.y, cp.x);
 
     while ((ch = getch()) != 'q') {
         clear();
-
-        for (size_t i = 0; i < ab.len; i++) {
-            printw("%02X ", ab.b[i]);
-        }
+        printBytes(ab);
 
         switch (ch) {
             case KEY_UP:
-                if (y > 0) y--;
+                if (cp.y > 0) cp.y--;
                 break;
             case KEY_DOWN:
-                y++;
+                cp.y++;
                 break;
             case KEY_LEFT:
-                if (x > 0) x--;
+                if (cp.x <= 0) break;
+
+                if ((cp.x-3) % 3 == 0) cp.x--;
+                cp.x--;
                 break;
             case KEY_RIGHT:
-                x++;
+                if ((cp.x+2) % 3 == 0) cp.x++;
+                cp.x++;
+                break;
+            case 'z':
+                changeByte(cp, ab, 0x00);
                 break;
         }
 
-        move(y, x);
+        move(cp.y, cp.x);
         refresh();
     }
 
