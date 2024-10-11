@@ -1,6 +1,7 @@
 #include <curses.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 struct abuff {
     unsigned char *b;
@@ -114,11 +115,13 @@ int boot_byd(int argc, char** argv) {
             case 'z':
                 changeByte(cp, ab, 0x00);
                 break;
-            case 'a':
+            //case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            //     'a', 'b', 'c', 'd', 'e', 'f':
+            case '0':case '1':case '2':case '3':case '4':case '5':case '6':case '7':case '8':case '9':case 'a':case 'b':case 'c':case 'd':case 'e':case 'f':
                 char bStr[2];
                 sprintf(bStr, "%02X", getByte(cp, ab));
 
-                bStr[0] = 'A';
+                bStr[0] = toupper(ch);
                 unsigned char c = (unsigned char) strtol(bStr, NULL, 16);
                 changeByte(cp, ab, c);
                 break;
