@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 struct abuff {
+    char* filename;
     unsigned char *b;
     int len;
 };
@@ -88,10 +89,17 @@ int boot_byd(int argc, char** argv) {
     struct abuff ab;
     cp.x=0;cp.y=0;
 
-    apByte(&ab, 0x01);
-    apByte(&ab, 0x12);
-    apByte(&ab, 0xAA);
-    
+    //apByte(&ab, 0x01);
+    //apByte(&ab, 0x12);
+    //apByte(&ab, 0xAA);
+    size_t len;
+    ab.filename = "test.bin";
+    unsigned char* b = readFileToHexArray(ab.filename, &len);
+
+    for (int i=0; i<len; i++) {
+        apByte(&ab, b[i]);
+    }
+
     refresh();
 
     int ch;
@@ -144,8 +152,15 @@ int boot_byd(int argc, char** argv) {
 
                     cp.x+=2;
                 }
+                break;
+            case '+':
+                apByte(&ab, 0x00);
 
-
+                clear();
+                printBytes(ab);
+                break;
+            case 's':
+                writeBytesToFile(ab.b, ab.len, ab.filename);
                 break;
         }
 

@@ -1,4 +1,4 @@
-//#include "utility.c"
+#include "utility.c"
 #include "editor.c"
 
 int main(int argc, char *argv[]) {
