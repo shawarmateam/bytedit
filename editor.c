@@ -129,11 +129,23 @@ int boot_byd(int argc, char** argv) {
                 char bStr[2];
                 sprintf(bStr, "%02X", getByte(cp, ab));
 
-                if (whatHalfOfb(cp, ab)) bStr[0] = toupper(ch);
-                else bStr[1] = toupper(ch);
+                if (whatHalfOfb(cp, ab)) {
+                    bStr[0] = toupper(ch);
 
-                unsigned char c = (unsigned char) strtol(bStr, NULL, 16);
-                changeByte(cp, ab, c);
+                    unsigned char c = (unsigned char) strtol(bStr, NULL, 16);
+                    changeByte(cp, ab, c);
+
+                    cp.x++;
+                } else {
+                    bStr[1] = toupper(ch);
+
+                    unsigned char c = (unsigned char) strtol(bStr, NULL, 16);
+                    changeByte(cp, ab, c);
+
+                    cp.x+=2;
+                }
+
+
                 break;
         }
 
