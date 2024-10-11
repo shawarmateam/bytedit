@@ -64,6 +64,13 @@ void changeByte(struct curpos cp, struct abuff ab, unsigned char c) {
     printBytes(ab);
 }
 
+unsigned char getByte(struct curpos cp, struct abuff ab) {
+    int byte_i = cp.x;
+    if ((byte_i-1) % 3 == 0) byte_i-1;
+    byte_i /= 3;
+    return ab.b[byte_i];
+}
+
 int boot_byd(int argc, char** argv) {
     init_byd();
 
@@ -106,6 +113,14 @@ int boot_byd(int argc, char** argv) {
                 break;
             case 'z':
                 changeByte(cp, ab, 0x00);
+                break;
+            case 'a':
+                char bStr[2];
+                sprintf(bStr, "%02X", getByte(cp, ab));
+
+                bStr[0] = 'A';
+                unsigned char c = (unsigned char) strtol(bStr, NULL, 16);
+                changeByte(cp, ab, c);
                 break;
         }
 
